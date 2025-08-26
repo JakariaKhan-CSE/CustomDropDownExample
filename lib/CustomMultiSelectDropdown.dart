@@ -13,9 +13,9 @@ class CustomMultiSelectDropdown<T> extends StatefulWidget {
     required this.items,
     required this.selectedValues,
     required this.onChanged,
-    required this.hintText,
-    required this.maxHeight,
-    required this.isExpanded,
+    this.hintText = 'Select items',
+    this.maxHeight = 200,
+    this.isExpanded = false,
   });
 
   @override
