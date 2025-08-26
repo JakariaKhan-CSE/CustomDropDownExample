@@ -29,6 +29,24 @@ class _CustomMultiSelectDropdownState<T>
   OverlayEntry? _overlayEntry;
   bool _isOpen = false;
 
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    _removeOverlay();
+  }
+
+  void _toggleDropDown() {
+    if (_isOpen) {
+      _removeOverlay();
+    } else {
+      _addOverlay();
+    }
+    setState(() {
+      _isOpen = !_isOpen;
+    });
+  }
+
   void _addOverlay() {
     final renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
@@ -66,11 +84,12 @@ class _CustomMultiSelectDropdownState<T>
 
                     return InkWell(
                       onTap: () {
-                        final newSelectedValues = List<T>.from(widget.selectedValues);
-                        if(isSelected){
+                        final newSelectedValues = List<T>.from(
+                          widget.selectedValues,
+                        );
+                        if (isSelected) {
                           newSelectedValues.remove(item.value);
-                        }
-                        else{
+                        } else {
                           newSelectedValues.add(item.value);
                         }
                         widget.onChanged(newSelectedValues);
@@ -85,10 +104,10 @@ class _CustomMultiSelectDropdownState<T>
                               ? Colors.blue.withOpacity(0.1)
                               : Colors.transparent,
                           border: Border(
-                            bottom: index < widget.items.length - 1 ? BorderSide(
-                              color: Colors.grey.shade200
-                            ): BorderSide.none
-                          )
+                            bottom: index < widget.items.length - 1
+                                ? BorderSide(color: Colors.grey.shade200)
+                                : BorderSide.none,
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -98,18 +117,34 @@ class _CustomMultiSelectDropdownState<T>
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey.shade400),
                                 borderRadius: BorderRadius.circular(4),
-                                color: isSelected ? Colors.blue : Colors.transparent
+                                color: isSelected
+                                    ? Colors.blue
+                                    : Colors.transparent,
                               ),
-                              child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+                              child: isSelected
+                                  ? const Icon(
+                                      Icons.check,
+                                      size: 16,
+                                      color: Colors.white,
+                                    )
+                                  : null,
                             ),
                             const SizedBox(width: 12),
-                            Expanded(child: Text(item.label,style: TextStyle(
-                              color: isSelected ? Colors.blue : Colors.black,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),))
+                            Expanded(
+                              child: Text(
+                                item.label,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.blue
+                                      : Colors.black,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-
                       ),
                     );
                   },
@@ -124,13 +159,65 @@ class _CustomMultiSelectDropdownState<T>
     Overlay.of(context).insert(_overlayEntry!);
   }
 
-  void _removeOverlay(){
+  void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GestureDetector(
+        onTap: _toggleDropDown,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade400),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: widget.selectedValues.isEmpty
+                    ? Text(
+                        widget.hintText,
+                        style: TextStyle(color: Colors.grey.shade600),
+                      )
+                    : Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: widget.selectedValues.map((value) {
+                          final item = widget.items.firstWhere(
+                            (item) => item.value == value,
+                            orElse: () => DropdownItem<T>(
+                              value: value,
+                              label: value.toString(),
+                            ),
+                          );
+
+                          return Chip(
+                            label: Text(item.label),
+                            backgroundColor: Colors.blue.withOpacity(0.1),
+                            labelStyle: const TextStyle(color: Colors.blue),
+                            deleteIcon: Icon(Icons.close, size: 16),
+                            onDeleted: () {
+                              final newSelectedValues = List<T>.from(
+                                widget.selectedValues,
+                              );
+                              newSelectedValues.remove(value);
+                              widget.onChanged(newSelectedValues);
+                            },
+                          );
+                        }).toList(),
+                      ),
+              ),
+              Icon(_isOpen? Icons.arrow_drop_up : Icons.arrow_drop_down,color: Colors.grey.shade600,)
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
